@@ -923,13 +923,16 @@ object GraphDSL extends GraphApply {
       def to[Mat2](sink: Graph[SinkShape[Out], Mat2]): Closed =
         super.~>(sink)(b)
 
+      protected override def reprFlatten[O2](r: Repr[O2] @uncheckedVariance) = r
     }
 
-    private class DisabledPortOps[Out, Mat](msg: String) extends PortOpsImpl[Out](null, null) {
+    private class DisabledPortOps[Out](msg: String) extends PortOpsImpl[Out](null, null) {
       override def importAndGetPort(b: Builder[_]): Outlet[Out] = throw new IllegalArgumentException(msg)
 
       override def via[T, Mat2](flow: Graph[FlowShape[Out, T], Mat2]): Repr[T] =
         throw new IllegalArgumentException(msg)
+
+      protected override def reprFlatten[O2](r: Repr[O2] @uncheckedVariance) = r
     }
 
     implicit class ReversePortOps[In](val inlet: Inlet[In]) extends ReverseCombinerBase[In] {

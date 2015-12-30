@@ -34,6 +34,8 @@ final class Flow[-In, +Out, +Mat](private[stream] override val module: Module)
   override type Closed = Sink[In @uncheckedVariance, Mat @uncheckedVariance]
   override type ClosedMat[+M] = Sink[In @uncheckedVariance, M]
 
+  protected override def reprFlatten[O2](r: Repr[O2] @uncheckedVariance) = r
+
   private[stream] def isIdentity: Boolean = this.module eq GraphStages.Identity.module
 
   override def via[T, Mat2](flow: Graph[FlowShape[Out, T], Mat2]): Repr[T] = viaMat(flow)(Keep.left)
@@ -349,7 +351,7 @@ trait FlowOps[+Out, +Mat] {
   import akka.stream.impl.Stages._
   import GraphDSL.Implicits._
 
-  type Repr[+O] <: FlowOps[O, Mat]
+  type Repr[+O]
 
   // result of closing a Source is RunnableGraph, closing a Flow is Sink
   type Closed
@@ -357,11 +359,14 @@ trait FlowOps[+Out, +Mat] {
   /*
    * Repr is actually self-bounded, but that would be a cyclic type declaration that is illegal in Scala.
    * Therefore we need to help the compiler by specifying that Repr expressions can be flattened.
+   * All derived classes need to implement this method by just returning r (type inference will do its magic,
+   * see the implementation in Flow near the top of this file).
    */
   import language.implicitConversions
-  private implicit def reprFlatten0[O1](r: Repr[O1]#Closed): Closed = r.asInstanceOf[Closed]
-  private implicit def reprFlatten1[O1, O2](r: Repr[O1]#Repr[O2]): Repr[O2] = r.asInstanceOf[Repr[O2]]
-  private implicit def reprFlatten2[O1, O2, O3](r: Repr[O1]#Repr[O2]#Repr[O3]): Repr[O3] = r.asInstanceOf[Repr[O3]]
+  protected implicit def reprFlatten[O2](r: Repr[O2]): FlowOps[O2, Mat] {
+    type Repr[+O] = FlowOps.this.Repr[O]
+    type Closed = FlowOps.this.Closed
+  }
 
   /**
    * Transform this [[Flow]] by appending the given processing steps.

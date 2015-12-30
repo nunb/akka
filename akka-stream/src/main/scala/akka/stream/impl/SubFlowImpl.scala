@@ -5,8 +5,8 @@ package akka.stream.impl
 
 import akka.stream._
 import akka.stream.scaladsl._
-
 import language.higherKinds
+import scala.annotation.unchecked.uncheckedVariance
 
 object SubFlowImpl {
   trait MergeBack[In, F[+_]] {
@@ -38,4 +38,5 @@ class SubFlowImpl[In, Out, Mat, F[+_], C](val subFlow: Flow[In, Out, Unit],
 
   def to[M](sink: Graph[SinkShape[Out], M]): C = finishFunction(subFlow.to(sink))
 
+  protected override def reprFlatten[O2](r: Repr[O2] @uncheckedVariance) = r
 }

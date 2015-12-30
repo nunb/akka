@@ -38,6 +38,8 @@ final class Source[+Out, +Mat](private[stream] override val module: Module)
   override type Closed = RunnableGraph[Mat @uncheckedVariance]
   override type ClosedMat[+M] = RunnableGraph[M]
 
+  protected override def reprFlatten[O2](r: Repr[O2] @uncheckedVariance) = r
+
   override val shape: SourceShape[Out] = module.shape.asInstanceOf[SourceShape[Out]]
 
   override def via[T, Mat2](flow: Graph[FlowShape[Out, T], Mat2]): Repr[T] = viaMat(flow)(Keep.left)
